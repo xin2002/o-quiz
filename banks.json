@@ -1,0 +1,12 @@
+﻿{
+  "banks": [
+    {
+      "label": "定向运动题库",
+      "file": "定向运动题库.json"
+    },
+    {
+      "label": "示例题库",
+      "file": "temp.json"
+    }
+  ]
+}
