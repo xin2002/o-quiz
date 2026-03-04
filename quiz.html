@@ -1,0 +1,59 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>题库答题页</title>
+  <link rel="stylesheet" href="./quiz.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <h1>题库答题</h1>
+      <div class="top-actions">
+        <select id="repoSelect"></select>
+        <button id="loadRepoBtn" type="button">加载仓库题库</button>
+        <label class="file-btn">
+          导入题库 JSON
+          <input id="fileInput" type="file" accept="application/json" hidden />
+        </label>
+      </div>
+    </header>
+
+    <section id="startPanel" class="card">
+      <h2 id="bankTitle">未加载题库</h2>
+      <p id="bankDesc" class="muted">请先导入题库文件</p>
+      <div class="meta" id="bankMeta">题目数：0</div>
+      <button id="startBtn" disabled>开始答题</button>
+    </section>
+
+    <section id="quizPanel" class="card hidden">
+      <div class="quiz-head">
+        <div id="progressText">第 1 / 1 题</div>
+        <div id="typeText" class="muted"></div>
+      </div>
+
+      <div id="stem" class="stem"></div>
+
+      <form id="answerForm">
+        <div id="answerArea"></div>
+        <div class="form-actions">
+          <button id="submitBtn" type="submit">提交本题</button>
+          <button id="nextBtn" type="button" class="hidden">下一题</button>
+        </div>
+      </form>
+
+      <div id="feedback" class="feedback hidden"></div>
+    </section>
+
+    <section id="resultPanel" class="card hidden">
+      <h2>答题完成</h2>
+      <div id="scoreText" class="score"></div>
+      <div id="detailList" class="detail-list"></div>
+      <button id="restartBtn">重新开始</button>
+    </section>
+  </div>
+
+  <script src="./quiz.js"></script>
+</body>
+</html>
