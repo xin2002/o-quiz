@@ -2,6 +2,9 @@
   repoSelect: document.getElementById("repoSelect"),
   loadRepoBtn: document.getElementById("loadRepoBtn"),
   fileInput: document.getElementById("fileInput"),
+  loadingPanel: document.getElementById("loadingPanel"),
+  loadingText: document.getElementById("loadingText"),
+  loadingBar: document.getElementById("loadingBar"),
   startPanel: document.getElementById("startPanel"),
   bankTitle: document.getElementById("bankTitle"),
   bankDesc: document.getElementById("bankDesc"),
@@ -57,9 +60,7 @@ async function loadRepoManifest() {
     const list = Array.isArray(data) ? data : data.banks;
     state.repoBanks = Array.isArray(list) ? list : [];
   } catch (err) {
-    state.repoBanks = [
-      { label: "定向运动题库", file: "定向运动题库.json" },
-    ];
+    state.repoBanks = [{ label: "定向运动题库", file: "定向运动题库.json" }];
   }
   renderRepoOptions();
 }
@@ -86,17 +87,20 @@ async function onLoadRepoBank() {
   if (!file) {
     return;
   }
+
+  showLoading(`正在加载仓库题库：${file}（0%）`, 0);
   try {
-    const resp = await fetch(encodeURI(file), { cache: "no-store" });
-    if (!resp.ok) {
-      throw new Error(`无法加载文件：${file}`);
-    }
-    const text = await resp.text();
+    const text = await fetchTextWithProgress(encodeURI(file), (percent) => {
+      showLoading(`正在加载仓库题库：${file}（${percent}%）`, percent);
+    });
+    showLoading("正在解析题库...", 100);
     const parsed = safeParseBank(text);
     const bank = normalizeBank(parsed);
     applyBank(bank, `仓库文件：${file}`);
   } catch (err) {
     alert(`加载失败：${err.message || "未知错误"}`);
+  } finally {
+    hideLoading();
   }
 }
 
@@ -105,14 +109,20 @@ async function onFileChange(e) {
   if (!file) {
     return;
   }
+
+  showLoading(`正在读取本地题库：${file.name}（0%）`, 0);
   try {
-    const text = await file.text();
+    const text = await readFileWithProgress(file, (percent) => {
+      showLoading(`正在读取本地题库：${file.name}（${percent}%）`, percent);
+    });
+    showLoading("正在解析题库...", 100);
     const parsed = safeParseBank(text);
     const bank = normalizeBank(parsed);
     applyBank(bank, `本地文件：${file.name}`);
   } catch (err) {
     alert(`导入失败：${err.message || "格式错误"}`);
   } finally {
+    hideLoading();
     e.target.value = "";
   }
 }
@@ -401,6 +411,98 @@ function resetQuiz() {
 function setInputsDisabled(disabled) {
   els.answerArea.querySelectorAll("input,textarea").forEach((el) => {
     el.disabled = disabled;
+  });
+}
+
+function setTopControlsDisabled(disabled) {
+  els.repoSelect.disabled = disabled;
+  els.loadRepoBtn.disabled = disabled || els.repoSelect.options.length === 0;
+}
+
+function showLoading(text, percent) {
+  els.loadingPanel.classList.remove("hidden");
+  els.loadingText.textContent = text || "正在加载...";
+  const p = Math.max(0, Math.min(100, Number(percent) || 0));
+  els.loadingBar.style.width = `${p}%`;
+  setTopControlsDisabled(true);
+}
+
+function hideLoading() {
+  els.loadingPanel.classList.add("hidden");
+  els.loadingBar.style.width = "0%";
+  setTopControlsDisabled(false);
+}
+
+async function fetchTextWithProgress(url, onProgress) {
+  const resp = await fetch(url, { cache: "no-store" });
+  if (!resp.ok) {
+    throw new Error(`无法加载文件：${decodeURI(url)}`);
+  }
+  if (!resp.body || !resp.body.getReader) {
+    const text = await resp.text();
+    if (onProgress) {
+      onProgress(100);
+    }
+    return text;
+  }
+
+  const total = Number(resp.headers.get("content-length")) || 0;
+  const reader = resp.body.getReader();
+  const chunks = [];
+  let received = 0;
+  let pseudoPercent = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    chunks.push(value);
+    received += value.length;
+
+    if (onProgress) {
+      if (total > 0) {
+        onProgress(Math.floor((received / total) * 100));
+      } else {
+        pseudoPercent = Math.min(95, pseudoPercent + 5);
+        onProgress(pseudoPercent);
+      }
+    }
+  }
+
+  const bytes = new Uint8Array(received);
+  let offset = 0;
+  chunks.forEach((c) => {
+    bytes.set(c, offset);
+    offset += c.length;
+  });
+  if (onProgress) {
+    onProgress(100);
+  }
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
+function readFileWithProgress(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onprogress = (e) => {
+      if (!onProgress) {
+        return;
+      }
+      if (e.lengthComputable && e.total > 0) {
+        onProgress(Math.floor((e.loaded / e.total) * 100));
+      } else {
+        onProgress(50);
+      }
+    };
+    reader.onload = () => {
+      if (onProgress) {
+        onProgress(100);
+      }
+      resolve(String(reader.result || ""));
+    };
+    reader.onerror = () => reject(reader.error || new Error("读取文件失败"));
+    reader.readAsText(file, "utf-8");
   });
 }
 
