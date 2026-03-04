@@ -1,0 +1,94 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>题库管理器 - 初版</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="panel sidebar">
+      <h1>题库管理器</h1>
+      <div class="field">
+        <label for="bankName">题库名称</label>
+        <input id="bankName" type="text" placeholder="例如：计算机基础题库" />
+      </div>
+      <div class="field">
+        <label for="bankDesc">题库描述</label>
+        <textarea id="bankDesc" rows="3" placeholder="可选"></textarea>
+      </div>
+
+      <div class="actions">
+        <button id="newBankBtn" class="danger">新建题库</button>
+        <button id="bindFileBtn">绑定同步文件</button>
+        <button id="saveBtn">立即同步到文件</button>
+        <button id="exportBtn">导出 JSON</button>
+        <button id="importBtn">导入 JSON</button>
+        <input id="importInput" type="file" accept="application/json" hidden />
+      </div>
+
+      <div class="status" id="statusText">未保存</div>
+
+      <hr />
+
+      <div class="question-list-head">
+        <h2>题目列表</h2>
+        <button id="addQuestionBtn">+ 新增题目</button>
+      </div>
+      <div id="questionList" class="question-list"></div>
+    </aside>
+
+    <main class="panel editor" id="editorPanel">
+      <div class="empty" id="emptyHint">请先新增并选择一道题目</div>
+
+      <div id="editorContent" class="hidden">
+        <div class="editor-top">
+          <div class="field">
+            <label for="questionType">题目类型</label>
+            <select id="questionType">
+              <option value="single">单选题</option>
+              <option value="multiple">多选题</option>
+              <option value="fill">填空题</option>
+              <option value="short">简答题</option>
+              <option value="judge">判断题</option>
+            </select>
+          </div>
+          <button id="deleteQuestionBtn" class="danger">删除当前题目</button>
+        </div>
+
+        <div class="block">
+          <div class="block-head">
+            <h3>题干</h3>
+            <div class="mini-actions">
+              <button data-insert-image="stem">插入图片</button>
+            </div>
+          </div>
+          <div id="stemEditor" class="rich-editor" contenteditable="true"></div>
+        </div>
+
+        <div id="optionSection" class="block">
+          <div class="block-head">
+            <h3>选项</h3>
+            <div class="mini-actions">
+              <button id="addOptionBtn">+ 添加选项</button>
+            </div>
+          </div>
+          <div id="optionList"></div>
+        </div>
+
+        <div id="answerSection" class="block">
+          <div class="block-head">
+            <h3>答案</h3>
+          </div>
+          <div id="answerEditor"></div>
+        </div>
+      </div>
+
+      <input id="imageInput" type="file" accept="image/*" multiple hidden />
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
